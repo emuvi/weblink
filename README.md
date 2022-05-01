@@ -1,3 +1,3 @@
-# WebLink
+# WebLinks
 
-WebLink is a library and a command program that reads websites and collects the links.
+WebLinks is a library and a command program that reads websites and collects the links.

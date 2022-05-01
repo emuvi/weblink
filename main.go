@@ -1,20 +1,17 @@
 package main
 
 import (
-	"io"
-	"net/http"
-	"net/url"
 	"os"
 	"strconv"
 	"strings"
-
-	"golang.org/x/net/html"
+	"weblinks/lib"
 )
 
-var until_depth = 3
-var follow_external = false
-
 func main() {
+	var until_depth = 1
+	var follow_external = false
+	var only_uppers = false
+	var only_lowers = false
 	links := make(map[string]int)
 	index := 1
 	length := len(os.Args)
@@ -25,17 +22,27 @@ func main() {
 			if err != nil {
 				panic(err)
 			}
-			index += 2
+			index++
+		} else if os.Args[index] == "-e" || os.Args[index] == "--external" {
+			follow_external = true
+		} else if os.Args[index] == "-u" || os.Args[index] == "--only-uppers" {
+			only_uppers = true
+		} else if os.Args[index] == "-l" || os.Args[index] == "--only-lowers" {
+			only_lowers = true
 		} else {
 			links[strings.ToLower(os.Args[index])] = 1
-			index++
 		}
+		index++
 	}
 	actual_depth := 1
 	for actual_depth <= until_depth {
 		for link, link_depth := range links {
 			if link_depth == actual_depth {
-				for _, new_link := range parse(link) {
+				for _, new_link := range lib.Parse(link, lib.Filters{
+					FollowExternal: follow_external,
+					OnlyUppers:     only_uppers,
+					OnlyLowers:     only_lowers,
+				}) {
 					links[new_link] = actual_depth + 1
 				}
 			}
@@ -44,54 +51,5 @@ func main() {
 	}
 	for link := range links {
 		println(link)
-	}
-}
-
-func parse(root string) []string {
-	resp, err := http.Get(root)
-	if err != nil {
-		panic(err)
-	}
-	links := catch(resp.Body)
-	urlRoot, err := url.Parse(root)
-	if err != nil {
-		panic(err)
-	}
-	var results []string
-	for _, link := range links {
-		urlLink, err := url.Parse(link)
-		if err != nil {
-			panic(err)
-		}
-		if !urlLink.IsAbs() {
-			urlLink = urlRoot.ResolveReference(urlLink)
-		}
-
-		if strings.HasPrefix(link, root) {
-			results = append(results, link)
-		}
-	}
-	return results
-}
-
-func catch(fromReader io.ReadCloser) []string {
-	defer fromReader.Close()
-	var results []string
-	tkns := html.NewTokenizer(fromReader)
-	for {
-		tknType := tkns.Next()
-		switch {
-		case tknType == html.ErrorToken:
-			return results
-		case tknType == html.StartTagToken:
-			tkn := tkns.Token()
-			if tkn.Data == "a" {
-				for _, attr := range tkn.Attr {
-					if attr.Key == "href" {
-						results = append(results, strings.ToLower(attr.Val))
-					}
-				}
-			}
-		}
 	}
 }

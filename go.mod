@@ -1,4 +1,4 @@
-module weblink
+module weblinks
 
 go 1.18
 
