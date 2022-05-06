@@ -29,6 +29,9 @@ func main() {
 			only_uppers = true
 		} else if os.Args[index] == "-l" || os.Args[index] == "--only-lowers" {
 			only_lowers = true
+		} else if os.Args[index] == "-i" || os.Args[index] == "--input" {
+			links[strings.ToLower(os.Args[index+1])] = 1
+			index++
 		} else {
 			links[strings.ToLower(os.Args[index])] = 1
 		}
