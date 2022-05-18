@@ -80,16 +80,16 @@ func IsSameOrLower(urlRoot *url.URL, urlLink *url.URL) bool {
 func Catch(fromReader io.ReadCloser) []string {
 	defer fromReader.Close()
 	var results []string
-	tkns := html.NewTokenizer(fromReader)
+	tokens := html.NewTokenizer(fromReader)
 	for {
-		tknType := tkns.Next()
+		kind := tokens.Next()
 		switch {
-		case tknType == html.ErrorToken:
+		case kind == html.ErrorToken:
 			return results
-		case tknType == html.StartTagToken:
-			tkn := tkns.Token()
-			if tkn.Data == "a" {
-				for _, attr := range tkn.Attr {
+		case kind == html.StartTagToken:
+			token := tokens.Token()
+			if token.Data == "a" {
+				for _, attr := range token.Attr {
 					if attr.Key == "href" {
 						results = append(results, strings.ToLower(attr.Val))
 					}
